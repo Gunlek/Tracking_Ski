@@ -1,6 +1,5 @@
 import Image
 import cv2
-import argparse
 import imutils
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,31 +17,28 @@ def detect(c):
     peri = cv2.arcLength(c, True)
     approx = cv2.approxPolyDP(c, 0.04*peri, True)
 
-    # if the shape is a triangle, it will have 3 vertices
+    # Si c'est un triangle ==> 3 sommets
     if len(approx) == 3:
         shape = "triangle"
 
-    # if the shape has 4 vertices, it is either a square or
-    # a rectangle
+    # Si c'est un rectangle ==> 4 sommets
     elif len(approx) == 4:
-        # compute the bounding box of the contour and use the
-        # bounding box to compute the aspect ratio
+        # Calcul les contour et dimension du rectangle
         (x, y, w, h) = cv2.boundingRect(approx)
         ar = w / float(h)
 
-        # a square will have an aspect ratio that is approximately
-        # equal to one, otherwise, the shape is a rectangle
+        # Si le ratio longueur / largeur est environ égal à 1 ==> carré
         shape = "square" if ar >= 0.95 and ar <= 1.05 else "rectangle"
 
-    # if the shape is a pentagon, it will have 5 vertices
+    # Si c'est un pentagone ==> 5 sommets
     elif len(approx) == 5:
         shape = "pentagon"
 
-    # otherwise, we assume the shape is a circle
+    # Sinon c'est un cercle
     else:
         shape = "circle"
 
-    # return the name of the shape
+    # renvoie le nom de la forme
     return shape
 
 def getCenters(img):
@@ -60,7 +56,7 @@ def getCenters(img):
 
     array = []
     for c in cnts:
-        # compute the center of the contour, then detect the name of the
+        # Calcul le centre du contour obtenu et detect le nom de la forme d'après son contour
         # shape using only the contour
         M = cv2.moments(c)
         if M["m00"]!=0:
@@ -75,8 +71,8 @@ def getCenters(img):
         shape = detect(c)
         if shape == "circle":
 
-            # multiply the contour (x, y)-coordinates by the resize ratio,
-            # then draw the contours and the name of the shape on the image
+            # Multiplie les dimensions x/y par le ratio de dimension d'image
+            # Dessign le contour et le nom de la forme sur l'image
             c = c.astype("float")
             c *= ratio
             c = c.astype("int")
