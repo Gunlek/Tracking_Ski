@@ -9,9 +9,10 @@ import numpy as np
 refreshRate = 0.5
 secondsToStudy = 60+52
 
-timeConstant = 0.03
+timeConstant = 0.033
+#framePerStep = int(timeConstant*secondsToStudy)+1
 realRefreshRate = int(refreshRate/timeConstant)
-framesToStudy = secondsToStudy/timeConstant-1
+framesToStudy = secondsToStudy/timeConstant-20
 
 def cutImage(srcImage, resultImg, inf, sup):
     img = Image.open(srcImage)
@@ -101,25 +102,6 @@ def getCenters(img):
             #cv2.waitKey(0)
     return array
 
-def rearrange_positions(coords):
-    coordsColSorted = []
-    for i in range(0, len(coords)):
-        temp_array = []
-        for pos in range(0, len(coords)):
-            if coords[pos][1] != 1:
-                temp_array.append(coords[pos][1])
-        temp_array = sorted(temp_array)
-        temp_coords = []
-        for k in range(0, len(coords)):
-            if coords[k][1]!=1:
-                temp_coords.append(coords[k])
-        coordsColSorted = []
-        for c in range(0, len(temp_array)):
-            for j in range(0, len(temp_coords)):
-                if temp_coords[j][1] == temp_array[c]:
-                    coordsColSorted.append(temp_coords[k])
-    return coordsColSorted
-
 def doCuts(img):
     cutImage(img, "marqueur_1.bmp", 75, 110)
     cutImage(img, "marqueur_2.bmp", 110, 150)
@@ -142,6 +124,17 @@ def doCuts(img):
     cutImage(img, "marqueur_15.bmp", 785, 825)
     cutImageHeight("marqueur_15.bmp", "marqueur_15.bmp", 0, 120) # y=142x/120
 
+def getVertices(X, Y):
+    verticesX = []
+    verticesY = []
+    oldValue = 0
+    topReached = False
+
+    for i in range(20, len(Y)-20):
+        if (Y[i] >= Y[i-1] and Y[i] > Y[i+1]) or (Y[i] <= Y[i-1] and Y[i] < Y[i+1]):
+            verticesY.append(Y[i])
+            verticesX.append(X[Y.index(Y[i])])
+    return [verticesX, verticesY]
 
 X=[]
 Y=[]
@@ -151,6 +144,9 @@ marks = [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []]
 #print arr
 
 
+#Debug only
+framesToStudy = 200
+Xorigin = 0
 
 for i in range(1, int(framesToStudy)):
     doCuts("../img/deformationSki_%d.bmp" % i)
@@ -164,17 +160,29 @@ for i in range(1, int(framesToStudy)):
             data[0][1]=int(data[0][1]*142/120)
         if j == 14:
             data[0][1]=int(data[0][1]*0.85+40)
+        if i==1:
+            Xorigin = data[0][1]
+        data[0][1] = data[0][1]-Xorigin
         marks[j-1].append(data[0])
-        print "mark_%d" % j
-        print data[0]
     X.append(i*timeConstant)
     print i
 
 for k in range(0, 1):
-    for j in range(0, int(framesToStudy-1)):
+    for j in range(0, int(framesToStudy)-1):
         Y.append(marks[k][j][1])
-    plt.plot(X, Y)
-    Y = []
+    #plt.plot(X, Y)
+    #Y = []
+
+plt.plot(X, Y)
+vertices = getVertices(X, Y)
+verticesX = vertices[0]
+verticesY = vertices[1]
+
+for i in range(0, len(verticesX)):
+    tempX = [verticesX[i], verticesX[i]]
+    tempY = [0, verticesY[i]]
+    plt.plot(tempX, tempY)
+
 #finalArray = [[], []]
 #for j in range(1, len(Y)):
 #    if abs(Y[j]-Y[j-1]) < 1:
